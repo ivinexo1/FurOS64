@@ -1,3 +1,0 @@
-/home/ivinexo/Documents/FurOS64/efi/build/CMakeFiles/BOOTX64.efi.dir
-/home/ivinexo/Documents/FurOS64/efi/build/CMakeFiles/edit_cache.dir
-/home/ivinexo/Documents/FurOS64/efi/build/CMakeFiles/rebuild_cache.dir

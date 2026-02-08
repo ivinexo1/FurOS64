@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/home/ivinexo/Documents/FurOS64/efi/build",
-  "command": "/usr/bin/cc  -I/home/ivinexo/Documents/FurOS64/efi/include/gnu-efi -ffreestanding -fpic -fno-stack-protector -fno-stack-check -fshort-wchar -mno-red-zone -m64 -o CMakeFiles/BOOTX64.efi.dir/src/main.c.o -c /home/ivinexo/Documents/FurOS64/efi/src/main.c",
-  "file": "/home/ivinexo/Documents/FurOS64/efi/src/main.c",
-  "output": "CMakeFiles/BOOTX64.efi.dir/src/main.c.o"
-}
-]

@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/ivinexo/Documents/FurOS64/build/cmake_install.cmake",
-		"/home/ivinexo/Documents/FurOS64/build/efi/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

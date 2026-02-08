@@ -27,7 +27,7 @@ target_compile_options(BOOTX64.efi PRIVATE -ffreestanding
 )
 
 target_link_options(BOOTX64.efi PRIVATE  -Wl,-shared -Wl,-Bsymbolic -nostdlib -nostartfiles
-                    -Wl,-T${PROJECT_SOURCE_DIR}/gnu-efi/gnuefi/elf_x86_64_efi.lds)
+                    -Wl,-T${PROJECT_SOURCE_DIR}/lib/gnu-efi/gnuefi/elf_x86_64_efi.lds)
 
 target_include_directories(BOOTX64.efi PRIVATE
                           ${PROJECT_SOURCE_DIR}/include/gnu-efi/)
