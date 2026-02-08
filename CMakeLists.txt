@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 4.0)
 project(kernel VERSION 0.1.0 LANGUAGES C ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_COMPILER gcc)
 
 add_executable(kernel
               ${PROJECT_SOURCE_DIR}/src/main.c
