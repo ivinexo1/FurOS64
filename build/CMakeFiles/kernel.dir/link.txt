@@ -1,0 +1,1 @@
+/usr/bin/cc -nostdlib -Wl,-Ttext 0x1000 -Wl,--oformat binary -Wl,--dependency-file=CMakeFiles/kernel.dir/link.d CMakeFiles/kernel.dir/src/main.c.o CMakeFiles/kernel.dir/src/font3.c.o CMakeFiles/kernel.dir/src/Drivers/vga.c.o CMakeFiles/kernel.dir/src/Terminal/stdio.c.o -o kernel

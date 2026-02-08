@@ -1,0 +1,170 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "kernel"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"target_link_options",
+			"target_compile_options",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 7,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 19,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 13,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 16,
+				"parent" : 0
+			}
+		]
+	},
+	"codemodelVersion" : 
+	{
+		"major" : 2,
+		"minor" : 9
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"backtrace" : 3,
+					"fragment" : "-ffreestanding"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-m64"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 4,
+					"path" : "/home/ivinexo/Documents/FurOS64/include"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3
+			]
+		}
+	],
+	"id" : "kernel::@6890427a1f51a3e7e1df",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"backtrace" : 2,
+				"fragment" : "-nostdlib",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-Wl,-Ttext",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "0x1000",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-Wl,--oformat",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "binary",
+				"role" : "flags"
+			}
+		],
+		"language" : "C"
+	},
+	"name" : "kernel",
+	"nameOnDisk" : "kernel",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/main.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/font3.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/Drivers/vga.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/Terminal/stdio.c",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

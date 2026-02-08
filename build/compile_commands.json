@@ -1,0 +1,32 @@
+[
+{
+  "directory": "/home/ivinexo/Documents/FurOS64/build",
+  "command": "/usr/bin/cc  -I/home/ivinexo/Documents/FurOS64/include -ffreestanding -m64 -o CMakeFiles/kernel.dir/src/main.c.o -c /home/ivinexo/Documents/FurOS64/src/main.c",
+  "file": "/home/ivinexo/Documents/FurOS64/src/main.c",
+  "output": "CMakeFiles/kernel.dir/src/main.c.o"
+},
+{
+  "directory": "/home/ivinexo/Documents/FurOS64/build",
+  "command": "/usr/bin/cc  -I/home/ivinexo/Documents/FurOS64/include -ffreestanding -m64 -o CMakeFiles/kernel.dir/src/font3.c.o -c /home/ivinexo/Documents/FurOS64/src/font3.c",
+  "file": "/home/ivinexo/Documents/FurOS64/src/font3.c",
+  "output": "CMakeFiles/kernel.dir/src/font3.c.o"
+},
+{
+  "directory": "/home/ivinexo/Documents/FurOS64/build",
+  "command": "/usr/bin/cc  -I/home/ivinexo/Documents/FurOS64/include -ffreestanding -m64 -o CMakeFiles/kernel.dir/src/Drivers/vga.c.o -c /home/ivinexo/Documents/FurOS64/src/Drivers/vga.c",
+  "file": "/home/ivinexo/Documents/FurOS64/src/Drivers/vga.c",
+  "output": "CMakeFiles/kernel.dir/src/Drivers/vga.c.o"
+},
+{
+  "directory": "/home/ivinexo/Documents/FurOS64/build",
+  "command": "/usr/bin/cc  -I/home/ivinexo/Documents/FurOS64/include -ffreestanding -m64 -o CMakeFiles/kernel.dir/src/Terminal/stdio.c.o -c /home/ivinexo/Documents/FurOS64/src/Terminal/stdio.c",
+  "file": "/home/ivinexo/Documents/FurOS64/src/Terminal/stdio.c",
+  "output": "CMakeFiles/kernel.dir/src/Terminal/stdio.c.o"
+},
+{
+  "directory": "/home/ivinexo/Documents/FurOS64/build/efi",
+  "command": "/usr/bin/cc  -I/home/ivinexo/Documents/FurOS64/efi/include/gnu-efi -ffreestanding -fpic -fno-stack-protector -fno-stack-check -fshort-wchar -mno-red-zone -m64 -o CMakeFiles/BOOTX64.efi.dir/src/main.c.o -c /home/ivinexo/Documents/FurOS64/efi/src/main.c",
+  "file": "/home/ivinexo/Documents/FurOS64/efi/src/main.c",
+  "output": "efi/CMakeFiles/BOOTX64.efi.dir/src/main.c.o"
+}
+]
