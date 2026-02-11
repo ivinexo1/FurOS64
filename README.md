@@ -7,13 +7,13 @@
 
 32bit version can be found [here](https://github.com/ivinexo1/FurOS), idk what to write here yet we need to port over the stuff first ig
 
-stuff to install [required WSL / linux]
+stuff to install [requires WSL / linux]
 ```
 sudo pacman -Sy gcc
 sudo pacman -Sy cmake
 sudo pacman -Sy make
 sudo pacman -Sy mtools
 ```
-also qemu but that can be done also in native windows
+also qemu but that can be done in windows
 
 `$'\r'` getting error similar to this can be fixed by doing notepad++ > edit > EOL conversion > LF
