@@ -7,7 +7,7 @@
 
 32bit version can be found [here](https://github.com/ivinexo1/FurOS), idk what to write here yet we need to port over the stuff first ig
 
-stuff to install [requires WSL / linux]
+stuff to install [requires linux / WSL]
 ```
 sudo pacman -Sy gcc
 sudo pacman -Sy cmake
