@@ -1,0 +1,11 @@
+OUTPUT_FORMAT(binary)
+ENTRY(kernel)
+SECTIONS
+{
+  .text.start (0x7000):{}
+  .text : ALIGN(CONSTANT(MAXPAGESIZE)) {}
+
+  .data : ALIGN(CONSTANT(MAXPAGESIZE)) {}
+
+  .bss : ALIGN(CONSTANT(MAXPAGESIZE)) {}
+}
