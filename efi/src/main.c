@@ -8,6 +8,8 @@
 #include <cpuid.h>
 #include <stddef.h>
 
+#define ENTRY_POINT 0x7000;
+
 typedef struct {
   UINT8 blue;
   UINT8 green;
@@ -15,12 +17,19 @@ typedef struct {
   UINT8 padding;
 } Pixel;
 
-static Pixel *framebuffer = NULL;
-static UINT64 framebuffersize = 0;
-static UINT32 VerticalResolution = 0;
-static UINT32 HorizontalResolution = 0;
-static UINT32 PixelsPerScanline = 0;
-static EFI_MEMORY_DESCRIPTOR *MemoryMap = NULL;
+typedef struct {
+  Pixel *framebuffer;
+  UINT64 framebuffersize;
+  UINT32 VerticalResolution;
+  UINT32 HorizontalResolution;
+  UINT32 PixelsPerScanline;
+  UINTN retSize;
+  UINTN MemMapSize;
+  EFI_MEMORY_DESCRIPTOR *MemoryMap;
+} kernel_args;
+
+static kernel_args *KernelArgs;
+static VOID *KernelLocation;
 
 EFI_FILE_HANDLE get_volume(EFI_HANDLE image) {
   EFI_LOADED_IMAGE *loaded_image = NULL;             /* image interface */
@@ -192,6 +201,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
   // Get GOP framebuffer
   EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
   EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+  kernel_args KernelArgsUefi;
+  KernelArgs = &KernelArgsUefi;
 
   status = uefi_call_wrapper(SystemTable->BootServices->LocateProtocol, 3,
                              &gopGuid, NULL, (void **)&gop);
@@ -200,12 +211,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
   } else {
     Print(L"Located GOP\n");
   }
-  framebuffer = (Pixel *)gop->Mode->FrameBufferBase;
-  framebuffersize = gop->Mode->FrameBufferSize;
-  VerticalResolution = gop->Mode->Info->VerticalResolution;
-  HorizontalResolution = gop->Mode->Info->HorizontalResolution;
-  PixelsPerScanline = gop->Mode->Info->PixelsPerScanLine;
-  Print(L"HorizontalResolution: %llu\n", HorizontalResolution);
+  KernelArgs->framebuffer = (Pixel *)gop->Mode->FrameBufferBase;
+  KernelArgs->framebuffersize = gop->Mode->FrameBufferSize;
+  KernelArgs->VerticalResolution = gop->Mode->Info->VerticalResolution;
+  KernelArgs->HorizontalResolution = gop->Mode->Info->HorizontalResolution;
+  KernelArgs->PixelsPerScanline = gop->Mode->Info->PixelsPerScanLine;
+  Print(L"HorizontalResolution: %llu\n", KernelArgs->HorizontalResolution);
 
   // Load kernel
   EFI_FILE_HANDLE filehandle = get_volume(ImageHandle);
@@ -233,59 +244,87 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
   Print(L"got info on file: %s\n", rootinfo->FileName);
   bufferinfo = rootinfo->FileSize;
-  EFI_PHYSICAL_ADDRESS *filebuffer = (EFI_PHYSICAL_ADDRESS *)0x1000;
+  Print(L"Kernel size %llu\n", bufferinfo);
+  EFI_PHYSICAL_ADDRESS filebuffer = (EFI_PHYSICAL_ADDRESS)0x7000;
+
   EFI_FILE_PROTOCOL *fileinterface = NULL;
   status = uefi_call_wrapper(SystemTable->BootServices->FreePool, 1, rootinfo);
-  status = uefi_call_wrapper(
-      SystemTable->BootServices->AllocatePages, 4, AllocateAddress,
-      EfiLoaderData, bufferinfo / 0x1000 + 1, (EFI_PHYSICAL_ADDRESS)filebuffer);
+  status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
+                             AllocateAnyPages, EfiLoaderData,
+                             bufferinfo / 0x1000 + 1, &KernelLocation);
   if (status != EFI_SUCCESS) {
     Print(L"Couldnt allocate pages for file %s\n", EFIStatusToStr(status));
   }
+  Print(L"Location of kernel %llx\n", KernelLocation);
   status = uefi_call_wrapper(filehandle->Open, 5, filehandle, &fileinterface,
                              L"kernel", EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
   if (status != EFI_SUCCESS) {
     Print(L"File couldnt open: %s\n", EFIStatusToStr(status));
   }
   status = uefi_call_wrapper(fileinterface->Read, 3, fileinterface, &bufferinfo,
-                             filebuffer);
+                             KernelLocation);
   if (status != EFI_SUCCESS) {
     Print(L"File couldnt read %s\n", EFIStatusToStr(status));
   }
+
+  // Make page tables
+  UINTN mapKey;
+  UINTN descSize;
+  UINTN MemMapSize;
+  EFI_MEMORY_DESCRIPTOR **pTopMemMap = NULL;
+  UINT32 Version;
+  /*Print(L"%llu\n", sizeof(UINTN));
+  status = getMemoryMap(SystemTable, &MemMapSize, pTopMemMap, &mapKey,
+                        &descSize, &Version);
+  if (status != EFI_SUCCESS) {
+    Print(L"Failed to get memory map: %s\n", EFIStatusToStr(status));
+  }
+  EFI_MEMORY_DESCRIPTOR *MemoryMap = *pTopMemMap;
+  EFI_PHYSICAL_ADDRESS PML4;
+  status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
+                             AllocateAnyPages, EfiLoaderData, 4, &PML4);
+  if (status != EFI_SUCCESS) {
+    Print(L"Failed to allocate PML4 table: %s\n", EFIStatusToStr(status));
+  }
+  while (MemoryMap->Type != EfiLoaderCode) {
+    MemoryMap = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)MemoryMap + descSize);
+  }
+  Print(L"Addess of code: %llx\n", MemoryMap);
+  Print(L"PML4 entry: %llx, PDPT entry: llx, Directory entry: %llx, Table "
+        L"entry: %llx\n",
+        (UINT64)MemoryMap >> 37, ((UINT64)MemoryMap >> 28) & 0xff,
+        ((UINT64)MemoryMap >> 20) & 0xff, ((UINT64)MemoryMap >> 12) & 0xff);
+*/
   // get memory map
   EFI_STATUS Status;
-  UINTN size, mapKey, retSize;
-  EFI_MEMORY_DESCRIPTOR **pTopMemMap = &MemoryMap;
-  UINT32 Version;
   EFI_INPUT_KEY key;
-  status =
-      getMemoryMap(SystemTable, &size, pTopMemMap, &mapKey, &retSize, &Version);
+  Print(L"%llu\n", sizeof(UINTN));
+  status = getMemoryMap(SystemTable, &(KernelArgs->MemMapSize), pTopMemMap,
+                        &mapKey, &(KernelArgs->retSize), &Version);
   if (status != EFI_SUCCESS) {
     Print(L"fuck\n");
   }
-  EFI_MEMORY_DESCRIPTOR *MemMapBuffer = *pTopMemMap;
+  KernelArgs->MemoryMap = *pTopMemMap;
+  //  *(kernel_args **)(0x1) = KernelArgs;
   status = uefi_call_wrapper(SystemTable->BootServices->ExitBootServices, 2,
                              ImageHandle, mapKey);
   if (status != EFI_SUCCESS) {
     Print(L"Couldnt exit boot services %s\n", EFIStatusToStr(status));
   }
 
-  asm volatile("movq %0, %%rsp;" ::"r"((UINT64)0xfff) : "memory");
-  asm volatile("movq %%rsp, %%rbp" ::: "memory");
+  // while (1 == 1)
+  //   ;
+  //  asm volatile("movq %0, %%rsp;" ::"r"((UINT64)0x6000) : "memory");
+  //  asm volatile("movq %%rsp, %%rbp" ::: "memory");
 
-  void (*kernel)(Pixel *, UINT64, UINT32, UINT32, UINT32,
-                 EFI_MEMORY_DESCRIPTOR *);
-  kernel = (void (*)(Pixel *, UINT64, UINT32, UINT32, UINT32,
-                     EFI_MEMORY_DESCRIPTOR *))0x1000;
-  kernel(framebuffer, framebuffersize, VerticalResolution, HorizontalResolution,
-         PixelsPerScanline, MemoryMap);
+  void (*kernel)();
+  kernel = (void (*)())KernelLocation;
+  asm volatile("movq %0, %%rdi" ::"r"((UINT64)KernelArgs) : "memory");
+  kernel();
 
   for (UINTN i = 0; i < gop->Mode->FrameBufferSize / 4; i++) {
-    framebuffer[i].red = 0xff;
+    KernelArgs->framebuffer[i].red = 0xff;
   }
   // Finish
-  while (1 == 1)
-    ;
-
   return EFI_SUCCESS;
 }
