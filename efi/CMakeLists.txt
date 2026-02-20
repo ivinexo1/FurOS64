@@ -48,3 +48,46 @@ set_target_properties(BOOTX64.so PROPERTIES
 add_custom_command(TARGET BOOTX64.so POST_BUILD
                   COMMAND objcopy -j .text -j .sdata -j .data -j .rodata -j .dynamic -j .dynsym -j .rel -j .rela -j .rel.* -j .rela.* -j .reloc --target pei-x86-64 --subsystem=10 ${CMAKE_BINARY_DIR}/efi/BOOTX64.so ${CMAKE_BINARY_DIR}/efi/BOOTX64.efi
 )
+
+add_executable(EFI_STUB.so
+              ${PROJECT_SOURCE_DIR}/lib/gnu-efi/x86_64/gnuefi/crt0-efi-x86_64.o
+              ${PROJECT_SOURCE_DIR}/src/EFI_STUB.c)
+
+target_link_directories(EFI_STUB.so
+                        PRIVATE ${PROJECT_SOURCE_DIR}/lib/gnu-efi/x86_64/lib
+                        PRIVATE ${PROJECT_SOURCE_DIR}/lib/gnu-efi/x86_64/gnuefi)
+
+target_link_libraries(EFI_STUB.so PRIVATE
+                      gnuefi
+                      efi
+)
+
+target_compile_options(EFI_STUB.so PRIVATE -ffreestanding
+                    -fPIC
+                    -fno-stack-protector
+                    -fno-stack-check
+                    -fshort-wchar
+                    -mno-red-zone
+                    -m64
+                    -maccumulate-outgoing-args
+                    -Og
+)
+
+target_link_options(EFI_STUB.so PRIVATE -Wl,-shared
+                    -Wl,-znocombreloc
+                    -Wl,-Bsymbolic -Wl,-nostdlib -nostartfiles
+                    -Wl,-T${PROJECT_SOURCE_DIR}/lib/gnu-efi/gnuefi/elf_x86_64_efi.lds)
+
+target_include_directories(EFI_STUB.so PRIVATE
+                          ${PROJECT_SOURCE_DIR}/include/gnu-efi/)
+
+set_target_properties(EFI_STUB.so PROPERTIES
+    BUILD_WITH_INSTALL_RPATH OFF
+    INSTALL_RPATH ""
+    SKIP_BUILD_RPATH YES
+    LINKER_LANGUAGE C
+)
+
+add_custom_command(TARGET EFI_STUB.so POST_BUILD
+                  COMMAND objcopy -j .text -j .sdata -j .data -j .rodata -j .dynamic -j .dynsym -j .rel -j .rela -j .rel.* -j .rela.* -j .reloc --target efi-app-x86_64 --subsystem=10 ${CMAKE_BINARY_DIR}/efi/EFI_STUB.so ${CMAKE_BINARY_DIR}/efi/EFI_STUB.efi
+)

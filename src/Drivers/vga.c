@@ -10,7 +10,7 @@ void initVga(Pixel *inFramebuffer, uint64_t inSize, uint32_t inPixelscanline) {
   size = inSize;
   pixel_per_scanline = inPixelscanline;
   uint32_t color = 0x000000;
-  for (uint64_t i = 0; i < size; i++) {
+  for (uint64_t i = 0; i < size / 4; i++) {
     framebuffer[i] = *(Pixel *)&color;
   }
 }

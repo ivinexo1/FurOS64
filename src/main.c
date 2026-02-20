@@ -5,6 +5,7 @@
 #include "stdlib/string.h"
 #include <cpuid.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 typedef struct {
   Pixel *framebuffer;
@@ -18,8 +19,11 @@ typedef struct {
 } kernel_args;
 
 void kernel() {
-  kernel_args *KernelArgs = *(kernel_args **)(1);
+  kernel_args *KernelArgs = 0;
   asm volatile("mov %%rdi, %0" : "=r"(KernelArgs)::"memory");
+  for (uint64_t i = 0; i < KernelArgs->framebuffersize / 4; i++) {
+    KernelArgs->framebuffer[i].bule = 0xff;
+  }
   initVga(KernelArgs->framebuffer, KernelArgs->framebuffersize,
           KernelArgs->PixelsPerScanline);
   initTerminal(KernelArgs->VerticalResolution,
@@ -40,8 +44,8 @@ void kernel() {
   PrintHex(cr4);
   PrintChar('\n');
   PrintHex(efer);
-  // InitMemoryManagment(KernelArgs->MemoryMap, KernelArgs->retSize,
-  //                     KernelArgs->MemMapSize);
+  //  InitMemoryManagment(KernelArgs->MemoryMap, KernelArgs->retSize,
+  //                      KernelArgs->MemMapSize);
   while (1)
     ;
 }
