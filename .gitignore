@@ -21,3 +21,6 @@ CMakeUserPresets.json
 build/
 **/build/
 *.pc
+/efi/.cache/clangd/index
+/efi/.cache/clangd/index
+/efi/.cache/clangd/index
