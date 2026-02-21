@@ -324,9 +324,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     Print(L"Couldnt get kernel info: %s\n", EFIStatusToStr(status));
   }
   // Allocate memory for kernel
-  status = uefi_call_wrapper(
-      SystemTable->BootServices->AllocatePages, 4, AllocateAnyPages,
-      EfiLoaderData, KernelInfo->FileSize / 0x1000 + 1, &KernelPhysicalAddress);
+  UINTN KernelPagesCount =
+      ((KernelInfo->FileSize + 0xfff) / 0x1000) * 0x1000 + 0x10000;
+  status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
+                             AllocateAnyPages, EfiLoaderData,
+                             KernelPagesCount / 0x1000, &KernelPhysicalAddress);
   if (status != EFI_SUCCESS) {
     Print(L"Failed to allocate memory for kernel: %s\n",
           EFIStatusToStr(status));
@@ -369,30 +371,55 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
   }
 
   // Allocate frame map
-  MEMORY_MAP_DESCRIPTOR *InitMemoryMapDesc = GetMemoryMap(SystemTable);
-  EFI_PHYSICAL_ADDRESS MaxPhysAddress = 0x8000000;
-  for (UINTN i = 0; i < InitMemoryMapDesc->MemoryMapSize;
-       i += InitMemoryMapDesc->DescriptorSize) {
-    EFI_MEMORY_DESCRIPTOR *Entry =
-        (EFI_MEMORY_DESCRIPTOR *)(InitMemoryMapDesc->MemoryMap + i);
-    for (UINTN j = 0; j < Entry->NumberOfPages; j++) {
+  // MEMORY_MAP_DESCRIPTOR *InitMemoryMapDesc = GetMemoryMap(SystemTable);
+  // EFI_PHYSICAL_ADDRESS MaxPhysAddress = 0x8000000;
+  // for (UINTN i = 0; i < InitMemoryMapDesc->MemoryMapSize;
+  //      i += InitMemoryMapDesc->DescriptorSize) {
+  //   EFI_MEMORY_DESCRIPTOR *Entry =
+  //       (EFI_MEMORY_DESCRIPTOR *)(InitMemoryMapDesc->MemoryMap + i);
+  //   for (UINTN j = 0; j < Entry->NumberOfPages; j++) {
+  //
+  //     MMap(Entry->PhysicalStart + j * 0x1000, Entry->PhysicalStart + j *
+  //     0x1000,
+  //          Entry->Attribute & 0x1, PML4, SystemTable);
+  //   }
+  // }
 
-      MMap(Entry->PhysicalStart + j * 0x1000, Entry->PhysicalStart + j * 0x1000,
-           Entry->Attribute & 0x1, PML4, SystemTable);
-    }
+  // Idenity map EFI_STUB
+  for (UINTN i = 0; i < RootImage->ImageSize; i += 0x1000) {
+    MMap((UINTN)RootImage->ImageBase + i, (UINTN)RootImage->ImageBase + i,
+         FALSE, PML4, SystemTable);
   }
 
+  for (UINTN i = 0; i < KernelPagesCount; i += 0x1000) {
+    MMap(KernelPhysicalAddress + i, 0xffff800000000000 + i, TRUE, PML4,
+         SystemTable);
+  }
+
+  UINTN kernelStackSize = 0x50000;
+  EFI_PHYSICAL_ADDRESS kernelStack = 0;
+  status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
+                             AllocateAnyPages, EfiLoaderData,
+                             kernelStackSize / 0x1000, &kernelStack);
+  for (UINTN i = 0; i < kernelStackSize; i += 0x1000) {
+    Print(L"Stack page: %lllx\n", 0xfffffffffffff000 - kernelStackSize + i);
+    MMap(kernelStack + i, 0xfffffffffffff000 - kernelStackSize + i, TRUE, PML4,
+         SystemTable);
+  }
+
+  Print(L"KernelPagesCount: %llu\n", KernelPagesCount);
+  Print(L"FrameBufferSize: %llu\n", GopProtocol->Mode->FrameBufferSize);
   // map framebuffer
-  for (UINTN i = 0; i < GopProtocol->Mode->FrameBufferSize + 0x1000;
+  for (UINTN i = 0; i < GopProtocol->Mode->FrameBufferSize + 0x3000;
        i += 0x1000) {
-    MMap(GopProtocol->Mode->FrameBufferBase + i, 0xffff800000000000 + i, FALSE,
-         PML4, SystemTable);
+    MMap(GopProtocol->Mode->FrameBufferBase + i,
+         0xffff800000000000 + KernelPagesCount + i, FALSE, PML4, SystemTable);
   }
-  KernelArgs->framebuffer = (Pixel *)0xffff800000000000;
+  KernelArgs->framebuffer = (Pixel *)(0xffff800000000000 + KernelPagesCount);
   /*
     UINTN FramesOfMem = MaxPhysAddress >> 12;
     UINTN FrameMapSize = FramesOfMem / 8;
-    EFI_PHYSICAL_ADDRESS FrameMap = 0;
+    EFI_PHYSICAL_ADDRESS FrameMap = 0 ;
     status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
                                AllocateAnyPages, EfiLoaderData,
                                FrameMapSize >> 12, &FrameMap);
@@ -463,12 +490,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     Print(L"Failed to exit BootServices: %s\n", EFIStatusToStr(status));
   }
   asm volatile("movq %0, %%cr3" ::"r"(PML4) : "memory");
-  /* asm volatile("mov %0, %%RSP\n"
-                "mov %%RSP, %%RBP" ::"r"(0xffff900000003000)
-                : "memory");
- */
+  asm volatile("mov %0, %%RBP\n"
+               "mov %%RBP, %%RSP" ::"r"(0xffffffffffffe000)
+               : "memory");
+
   void (*kernel)();
-  kernel = (void (*)())KernelPhysicalAddress;
+  kernel = (void (*)())0xffff800000000000;
   asm volatile("movq %0, %%rdi" ::"r"((UINT64)KernelArgs) : "memory");
   kernel();
 

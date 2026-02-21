@@ -2,7 +2,7 @@ OUTPUT_FORMAT(binary)
 ENTRY(kernel)
 SECTIONS
 {
-  .text.start (0x7000):{}
+  .text.start (0xffff800000000000):{}
   .text : ALIGN(CONSTANT(MAXPAGESIZE)) {}
 
   .data : ALIGN(CONSTANT(MAXPAGESIZE)) {}

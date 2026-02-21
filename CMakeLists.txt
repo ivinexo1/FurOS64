@@ -16,8 +16,7 @@ target_compile_options(kernel PRIVATE
                         -ffreestanding
                         -fno-stack-protector
                         -fno-stack-check
-                        -m64
-                        -fPIC)
+                        -m64)
 
 target_include_directories(kernel PRIVATE
                           ${PROJECT_SOURCE_DIR}/include/)
