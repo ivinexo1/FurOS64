@@ -16,4 +16,11 @@ sudo pacman -Sy mtools
 ```
 also qemu but that can be done in windows
 
+```
+rm build -rf
+cmake -B build
+```
+
 `$'\r'` getting error similar to this can be fixed by doing notepad++ > edit > EOL conversion > LF
+
+remove `-d int,mmu` z qemu cmd lebo windows ma skill issue
