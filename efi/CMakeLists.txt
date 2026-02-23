@@ -27,7 +27,6 @@ target_compile_options(BOOTX64.so PRIVATE -ffreestanding
                     -fshort-wchar
                     -mno-red-zone
                     -m64
-                    -maccumulate-outgoing-args
 )
 
 target_link_options(BOOTX64.so PRIVATE -Wl,-shared
