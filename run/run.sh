@@ -8,4 +8,6 @@ mmd -i fat.img ::/EFI/BOOT
 mcopy -i fat.img ../build/kernel ::/
 mcopy -i fat.img ../build/efi/EFI_STUB.efi ::/
 mcopy -i fat.img ../build/efi/BOOTX64.efi ::/EFI/BOOT
-qemu-system-x86_64 -d int,mmu -no-reboot -no-shutdown -cpu qemu64 -bios OVMF.fd -drive file=fat.img,if=ide,format=raw
+# qemu-system-x86_64 -d int,mmu -no-reboot -no-shutdown -cpu qemu64 -bios OVMF.fd -drive file=fat.img,if=ide,format=raw
+# aka je pointa printovania ? + win11 sa posere z toho
+qemu-system-x86_64 -no-reboot -no-shutdown -cpu qemu64 -bios OVMF.fd -drive file=fat.img,if=ide,format=raw
