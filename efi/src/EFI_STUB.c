@@ -1,14 +1,11 @@
 #include "efi.h"
-#include "efiapi.h"
 #include "efidef.h"
 #include "efierr.h"
-#include "efiip.h"
 #include "x86_64/efibind.h"
 #include "x86_64/efilib.h"
-#include <stdlib.h>
 
 #define PTE_PRESENT (1ULL << 0)
-
+#define HIGHER_HALF_START 0xffff800000000000
 #define PTE_ADDR_MASK 0x000FFFFFFFFFF000ULL
 
 typedef struct {
@@ -32,7 +29,10 @@ typedef struct {
   UINT32 VerticalResolution;
   UINT32 HorizontalResolution;
   UINT32 PixelsPerScanline;
-  MEMORY_MAP_DESCRIPTOR *MemoryMapDescriptor;
+  MEMORY_MAP_DESCRIPTOR MemoryMapDescriptor;
+  UINT64 FrameMap;
+  UINT64 FrameMapSize;
+  EFI_PHYSICAL_ADDRESS TempMappingRegion;
 } KERNEL_ARGS;
 
 static EFI_PHYSICAL_ADDRESS KernelPhysicalAddress = 0;
@@ -251,7 +251,7 @@ EFI_STATUS MMap(EFI_PHYSICAL_ADDRESS PHYS, EFI_VIRTUAL_ADDRESS VIRT,
   PDPT[EntryPDPT] |= 3;
 
   // Find/make PD entry
-  UINT64 *PT;
+  UINT64 *PT = (UINT64 *)PHYS;
   status = GetTable(PD, EntryPD, &PT, SystemTable);
 
   if (EFI_ERROR(status)) {
@@ -262,6 +262,51 @@ EFI_STATUS MMap(EFI_PHYSICAL_ADDRESS PHYS, EFI_VIRTUAL_ADDRESS VIRT,
 
   // Make PT entry
   PT[EntryPT] = PHYS & ~(0xfff) | 0x3 | (Cached ? (1 << 4) : 0);
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS MakeTempRegion(EFI_VIRTUAL_ADDRESS VIRT, UINT64 *PML4,
+                          EFI_SYSTEM_TABLE *SystemTable) {
+  EFI_STATUS status;
+  EFI_PHYSICAL_ADDRESS phys;
+  UINTN EntryPML4 = VIRT >> 39 & 0x1ff;
+  UINTN EntryPDPT = VIRT >> 30 & 0x1ff;
+  UINTN EntryPD = VIRT >> 21 & 0x1ff;
+  UINTN EntryPT = VIRT >> 12 & 0x1ff;
+
+  // Find / make PML4 entry
+  UINT64 *PDPT;
+  status = GetTable(PML4, EntryPML4, &PDPT, SystemTable);
+
+  if (EFI_ERROR(status)) {
+    Print(L"Failed to get PDPT: %s\n", EFIStatusToStr(status));
+    return status;
+  }
+  PML4[EntryPML4] |= 3;
+
+  // Find / make PDPT entry
+  UINT64 *PD;
+  status = GetTable(PDPT, EntryPDPT, &PD, SystemTable);
+
+  if (EFI_ERROR(status)) {
+    Print(L"Failed to get PD: %s\n", EFIStatusToStr(status));
+    return status;
+  }
+  PDPT[EntryPDPT] |= 3;
+
+  // Find/make PD entry
+  UINT64 *PT;
+  status = GetTable(PD, EntryPD, &PT, SystemTable);
+
+  if (EFI_ERROR(status)) {
+    Print(L"Failed to get PT: %s\n", EFIStatusToStr(status));
+    return status;
+  }
+  PD[EntryPD] |= 3;
+
+  // Make PT entry
+  PT[EntryPT] = (UINT64)PT & ~(0xfff) | 0x3;
 
   return EFI_SUCCESS;
 }
@@ -370,128 +415,87 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     PML4[i] = 0;
   }
 
-  // Allocate frame map
-  // MEMORY_MAP_DESCRIPTOR *InitMemoryMapDesc = GetMemoryMap(SystemTable);
-  // EFI_PHYSICAL_ADDRESS MaxPhysAddress = 0x8000000;
-  // for (UINTN i = 0; i < InitMemoryMapDesc->MemoryMapSize;
-  //      i += InitMemoryMapDesc->DescriptorSize) {
-  //   EFI_MEMORY_DESCRIPTOR *Entry =
-  //       (EFI_MEMORY_DESCRIPTOR *)(InitMemoryMapDesc->MemoryMap + i);
-  //   for (UINTN j = 0; j < Entry->NumberOfPages; j++) {
-  //
-  //     MMap(Entry->PhysicalStart + j * 0x1000, Entry->PhysicalStart + j *
-  //     0x1000,
-  //          Entry->Attribute & 0x1, PML4, SystemTable);
-  //   }
-  // }
-
   // Idenity map EFI_STUB
   for (UINTN i = 0; i < RootImage->ImageSize; i += 0x1000) {
     MMap((UINTN)RootImage->ImageBase + i, (UINTN)RootImage->ImageBase + i,
          FALSE, PML4, SystemTable);
   }
 
+  UINTN CurrentPage = 0;
+  // Map higher half kernel
   for (UINTN i = 0; i < KernelPagesCount; i += 0x1000) {
-    MMap(KernelPhysicalAddress + i, 0xffff800000000000 + i, TRUE, PML4,
+    MMap(KernelPhysicalAddress + i, HIGHER_HALF_START + i, TRUE, PML4,
          SystemTable);
   }
-
+  CurrentPage += KernelPagesCount;
+  Print(L"%lllx\n", CurrentPage);
+  // Allocate stack
   UINTN kernelStackSize = 0x50000;
   EFI_PHYSICAL_ADDRESS kernelStack = 0;
   status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
                              AllocateAnyPages, EfiLoaderData,
                              kernelStackSize / 0x1000, &kernelStack);
   for (UINTN i = 0; i < kernelStackSize; i += 0x1000) {
-    Print(L"Stack page: %lllx\n", 0xfffffffffffff000 - kernelStackSize + i);
     MMap(kernelStack + i, 0xfffffffffffff000 - kernelStackSize + i, TRUE, PML4,
          SystemTable);
   }
 
-  Print(L"KernelPagesCount: %llu\n", KernelPagesCount);
-  Print(L"FrameBufferSize: %llu\n", GopProtocol->Mode->FrameBufferSize);
-  // map framebuffer
-  for (UINTN i = 0; i < GopProtocol->Mode->FrameBufferSize + 0x3000;
-       i += 0x1000) {
-    MMap(GopProtocol->Mode->FrameBufferBase + i,
-         0xffff800000000000 + KernelPagesCount + i, FALSE, PML4, SystemTable);
-  }
-  KernelArgs->framebuffer = (Pixel *)(0xffff800000000000 + KernelPagesCount);
-  /*
-    UINTN FramesOfMem = MaxPhysAddress >> 12;
-    UINTN FrameMapSize = FramesOfMem / 8;
-    EFI_PHYSICAL_ADDRESS FrameMap = 0 ;
-    status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
-                               AllocateAnyPages, EfiLoaderData,
-                               FrameMapSize >> 12, &FrameMap);
-    if (status != EFI_SUCCESS) {
-      Print(L"Failed to allocate memory for frame map: %s\n",
-            EFIStatusToStr(status));
+  // Allocate frame map
+  MEMORY_MAP_DESCRIPTOR *InitMemoryMapDesc = GetMemoryMap(SystemTable);
+  UINTN MaxAddress = 0;
+  for (UINTN i = 0; i < InitMemoryMapDesc->MemoryMapSize;
+       i += InitMemoryMapDesc->DescriptorSize) {
+    EFI_MEMORY_DESCRIPTOR *Entry =
+        (EFI_MEMORY_DESCRIPTOR *)(InitMemoryMapDesc->MemoryMap + i);
+    if (Entry->PhysicalStart > MaxAddress) {
+      MaxAddress = Entry->PhysicalStart + Entry->NumberOfPages * 0x1000;
     }
-    */
-  // Init page map
-  // EFI_PHYSICAL_ADDRESS phys = 0;
-  // UINT64 *PML4 = NULL;
-  // status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
-  //                            AllocateAnyPages, EfiLoaderData, 1, &phys);
-  // if (status != EFI_SUCCESS) {
-  //   Print(L"Failed to allocate memory for PML4: %s\n",
-  //   EFIStatusToStr(status));
-  // }
-  // PML4 = (UINT64 *)phys;
-  // for (UINTN i = 0; i < 0x400; i++) {
-  //   PML4[i] = 0;
-  // }
-  //
-  //  for (UINTN i = 0; i < MaxPhysAddress; i += 0x1000) {
-  //    MMap(i, i, TRUE, PML4, SystemTable);
-  //  }
-  /*
-    // Remap kernel
-    EFI_PHYSICAL_ADDRESS KernelPhysPage = KernelPhysicalAddress;
-    EFI_VIRTUAL_ADDRESS KernelVirtPage = 0xffff800000000000;
-
-    for (UINTN i = 0; i < KernelInfo->FileSize; i += 0x1000) {
-      MMap(KernelPhysPage + i, KernelVirtPage + i, FALSE, PML4, SystemTable);
-    }
-
-  // idenity map EFI_STUB
-  EFI_PHYSICAL_ADDRESS StubPhysPage =
-      (EFI_PHYSICAL_ADDRESS)RootImage->ImageBase;
-  EFI_VIRTUAL_ADDRESS StubVirtPage = (EFI_PHYSICAL_ADDRESS)RootImage->ImageBase;
-  for (UINTN i = 0; i < RootImage->ImageSize; i += 0x1000) {
-    MMap(StubPhysPage + i, StubVirtPage + i, TRUE, PML4, SystemTable);
   }
-
-  // Remap the framebuffer
-  EFI_VIRTUAL_ADDRESS FramebufferRemap = 0xffff800000000000;
-  for (UINTN i = 0; i < KernelArgs->framebuffersize; i += 0x1000) {
-    MMap((EFI_PHYSICAL_ADDRESS)KernelArgs->framebuffer + i,
-         FramebufferRemap + i, FALSE, PML4, SystemTable);
-  }
-
-  // Map the stack
-  EFI_PHYSICAL_ADDRESS stack = 0;
+  EFI_PHYSICAL_ADDRESS FrameMap;
+  UINTN SizeOfFrameMap = (MaxAddress / 0x1000) / 8;
   status = uefi_call_wrapper(SystemTable->BootServices->AllocatePages, 4,
-                             AllocateAnyPages, EfiLoaderData, 3, &stack);
+                             AllocateAnyPages, EfiLoaderData,
+                             (SizeOfFrameMap + 0xfff) / 0x1000, &FrameMap);
   if (status != EFI_SUCCESS) {
-    Print(L"Failed to allocate memory for stack: %s\n", EFIStatusToStr(status));
+    Print(L"Failed to allocate memory for framemap: %s\n",
+          EFIStatusToStr(status));
   }
-  for (UINTN i = 0x3000; i >= 0; i -= 0x1000) {
-    MMap(stack + i, 0xffff900000000000 + i, TRUE, PML4, SystemTable);
+  for (UINTN i = 0; i < SizeOfFrameMap; i += 0x1000) {
+    MMap(FrameMap + i, HIGHER_HALF_START + CurrentPage + i, TRUE, PML4,
+         SystemTable);
   }
-  */
-  //  KernelArgs->framebuffer = (Pixel *)FramebufferRemap;
-  KernelArgs->MemoryMapDescriptor = GetMemoryMap(SystemTable);
+  KernelArgs->FrameMap = HIGHER_HALF_START + CurrentPage;
+  KernelArgs->FrameMapSize = SizeOfFrameMap;
+  CurrentPage += ((SizeOfFrameMap + 0xfff) / 0x1000) * 0x10000;
+
+  // map framebuffer
+  for (UINTN i = 0; i < GopProtocol->Mode->FrameBufferSize; i += 0x1000) {
+    MMap(GopProtocol->Mode->FrameBufferBase + i,
+         HIGHER_HALF_START + CurrentPage + i, FALSE, PML4, SystemTable);
+  }
+  KernelArgs->framebuffer = (Pixel *)(HIGHER_HALF_START + CurrentPage);
+  CurrentPage += GopProtocol->Mode->FrameBufferSize;
+  Print(L"%lllx\n", CurrentPage);
+
+  // Make temp mapping region
+  CurrentPage = (CurrentPage & (~(UINT64)0x1fffff)) + (1 << 21);
+  UINTN VirtAddressOfTempRegion = CurrentPage;
+  Print(L"%lllx\n", CurrentPage);
+  MakeTempRegion(HIGHER_HALF_START + VirtAddressOfTempRegion, PML4,
+                 SystemTable);
+  KernelArgs->TempMappingRegion = HIGHER_HALF_START + VirtAddressOfTempRegion;
+  CurrentPage += 511;
+  KernelArgs->MemoryMapDescriptor = *GetMemoryMap(SystemTable);
 
   status =
       uefi_call_wrapper(SystemTable->BootServices->ExitBootServices, 2,
-                        ImageHandle, KernelArgs->MemoryMapDescriptor->MapKey);
+                        ImageHandle, KernelArgs->MemoryMapDescriptor.MapKey);
   if (status != EFI_SUCCESS) {
     Print(L"Failed to exit BootServices: %s\n", EFIStatusToStr(status));
   }
   asm volatile("movq %0, %%cr3" ::"r"(PML4) : "memory");
   asm volatile("mov %0, %%RBP\n"
-               "mov %%RBP, %%RSP" ::"r"(0xffffffffffffe000)
+               "mov %%RBP, %%RSP" ::"r"(0xfffffffffffff000)
                : "memory");
 
   void (*kernel)();
