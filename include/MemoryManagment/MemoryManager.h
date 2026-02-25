@@ -1,4 +1,7 @@
+#include <stddef.h>
 #include <stdint.h>
+
+#define PTE_ADDR_MASK 0x000FFFFFFFFFF000ULL
 
 typedef enum {
   EfiReservedMemoryType,
@@ -28,8 +31,9 @@ typedef struct {
   uint64_t Attribute;
 } EFI_MEMORY_DESCRIPTOR;
 
-int memcpy(void *from, void *to, uint64_t size);
+int memcpy(void *restrict dest, const void *restrict src, size_t n);
 
-int InitMemoryManagment(EFI_MEMORY_DESCRIPTOR *in_memory_map,
-                        uint64_t in_descriptor_size,
-                        uint64_t in_memory_map_size);
+int InitMemoryManagment(void *in_memory_map, uint64_t in_descriptor_size,
+                        uint64_t in_memory_map_size, void *in_frame_map,
+                        uint64_t in_frame_map_size,
+                        uint64_t *in_temp_mapping_region);

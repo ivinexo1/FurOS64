@@ -1,5 +1,6 @@
 #include "MemoryManagment/MemoryManager.h"
 #include "Terminal/stdio.h"
+#include "kernel_args.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -8,10 +9,12 @@ static uint64_t descriptor_size;
 static uint64_t memory_map_size;
 static uint8_t *frame_map = NULL;
 static uint64_t frame_map_size;
+static uint64_t *temp_mapping_region;
+static void *dynamic_memory;
 
-int memcpy(void *from, void *to, uint64_t size) {
-  for (int i = 0; i < size; i++) {
-    *((uint8_t *)to + i) = *((uint8_t *)from + i);
+int memcpy(void *restrict dest, const void *restrict src, size_t n) {
+  for (size_t i = 0; i < n; i++) {
+    ((uint8_t *)dest)[i] = ((uint8_t *)src)[i];
   }
   return 0;
 }
@@ -21,7 +24,6 @@ int AllocFrame(uint8_t *frame_pointer) {
   uint64_t offset = (uint64_t)frame_pointer / 8;
   uint64_t bit_in_byte = (uint64_t)frame_pointer % 8;
   if (((frame_map[offset] >> bit_in_byte) & 1) != 0) {
-    PrintString("frame alloc error\n");
     return -1;
   }
   frame_map[offset] |= (uint8_t)(1 << bit_in_byte);
@@ -38,56 +40,45 @@ int FreeFrame(uint8_t *frame_pointer) {
   return 0;
 }
 
-int InitMemoryManagment(EFI_MEMORY_DESCRIPTOR *in_memory_map,
-                        uint64_t in_descriptor_size,
-                        uint64_t in_memory_map_size) {
-  uint64_t pages_in_mem_count = 0;
-  uint64_t entries_in_memmap = in_memory_map_size / in_descriptor_size;
-  //  PrintNum(entries_in_memmap);
-  //  PrintChar('\n');
-  EFI_MEMORY_DESCRIPTOR *map_entry;
-  for (int i = 0; i < in_memory_map_size; i += in_descriptor_size) {
-    map_entry = ((EFI_MEMORY_DESCRIPTOR *)((uint8_t *)in_memory_map + i));
-    pages_in_mem_count += map_entry->NumberOfPages;
-  }
-  frame_map_size = pages_in_mem_count;
-  uint64_t pages_of_frame_map = frame_map_size / 0x1000 + 1;
-  // PrintNum(pages_of_frame_map);
-  // PrintChar('\n');
+int RefreshPages() {
+  asm volatile("mov %%cr3, %%rax\n\r"
+               "mov %%rax, %%cr3" ::
+                   : "memory");
+  return 0;
+}
 
-  uint64_t mammap_current_entry = 0;
-  while (frame_map == NULL && mammap_current_entry < entries_in_memmap) {
-    map_entry =
-        ((EFI_MEMORY_DESCRIPTOR *)((uint8_t *)in_memory_map +
-                                   mammap_current_entry * in_descriptor_size));
-    if (map_entry->NumberOfPages >= pages_of_frame_map) {
-      if (map_entry->Type == EfiConventionalMemory) {
-        frame_map = map_entry->PhysicalStart;
-      }
+void *TempMap(void *restrict physical_address) {
+  size_t i = 1;
+  while (temp_mapping_region[i] & 1) {
+    if (i > 511) {
+      return NULL;
     }
-    mammap_current_entry++;
   }
-  if (frame_map == NULL) {
-    PrintString("Couldnt find large enought segment for frame map\n");
-    return -1;
+  if (i > 511) {
+    return NULL;
   }
-  PrintHex((uint64_t)frame_map);
-  PrintChar('\n');
-  PrintChar('a');
+  temp_mapping_region[i] = (uint64_t)physical_address & PTE_ADDR_MASK | 3;
+  return temp_mapping_region + i * 0x1000;
+}
 
-  for (int i = 0; i < frame_map_size; i++) {
-    frame_map[i] = 0;
-  }
-  PrintChar('a');
-  // for (uint64_t i = 0; i < 76; i++) {
-  //   AllocFrame((void *)(i * 0x1000));
-  //   AllocFrame((void *)(i * 0x1000));
-  //   if (AllocFrame((void *)(i * 0x1000)) == -1) {
-  //     PrintString("Problem with frame allocaion\n");
-  //     return -1;
-  //   }
-  // }
-  //   PrintHex(0);
-  //   PrintHex(frame_map[0]);
+int FreeTempMap(void *restrict virtual_address) {
+  temp_mapping_region[(((uint64_t)virtual_address >> 12) & 0x1ff) / 8] &=
+      ~(uint64_t)0x1;
+  RefreshPages();
+  return 0;
+}
+
+int InitMemoryManagment(void *in_memory_map, uint64_t in_descriptor_size,
+                        uint64_t in_memory_map_size, void *in_frame_map,
+                        uint64_t in_frame_map_size,
+                        uint64_t *in_temp_mapping_region) {
+  memory_map = in_memory_map;
+  memory_map_size = in_memory_map_size;
+  descriptor_size = in_descriptor_size;
+  frame_map = in_frame_map;
+  frame_map_size = in_frame_map_size;
+  temp_mapping_region = in_temp_mapping_region;
+  dynamic_memory = temp_mapping_region + 0x1000 * 512;
+
   return 0;
 }

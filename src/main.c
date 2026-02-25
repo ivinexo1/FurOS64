@@ -21,7 +21,10 @@ typedef struct {
   uint32_t VerticalResolution;
   uint32_t HorizontalResolution;
   uint32_t PixelsPerScanline;
-  MEMORY_MAP_DESCRIPTOR *MemoryMapDescriptor;
+  MEMORY_MAP_DESCRIPTOR MemoryMapDescriptor;
+  void *FrameMap;
+  uint64_t FrameMapSize;
+  uint64_t *TempMappingRegion;
 } kernel_args;
 static kernel_args *KernelArgs = 0;
 
@@ -29,16 +32,20 @@ void kernel() {
   asm volatile("mov %%rdi, %0" : "=r"(KernelArgs)::"memory");
   asm volatile("cli");
   for (uint64_t i = 0; i < KernelArgs->framebuffersize / 16; i++) {
-    KernelArgs->framebuffer[i].bule = 0xff;
+    KernelArgs->framebuffer[i].blue = 0xff;
   }
   // asm volatile("hlt");
   initVga(KernelArgs->framebuffer, KernelArgs->framebuffersize,
           KernelArgs->PixelsPerScanline);
   initTerminal(KernelArgs->VerticalResolution,
                KernelArgs->HorizontalResolution);
+  InitMemoryManagment((void *)KernelArgs->MemoryMapDescriptor.MemoryMap,
+                      KernelArgs->MemoryMapDescriptor.DescriptorSize,
+                      KernelArgs->MemoryMapDescriptor.MemoryMapSize,
+                      KernelArgs->FrameMap, KernelArgs->FrameMapSize,
+                      KernelArgs->TempMappingRegion);
+
   PrintString("Hello\n");
-  //   InitMemoryManagment(KernelArgs->MemoryMap, KernelArgs->retSize,
-  //                       KernelArgs->MemMapSize);
   while (1)
     ;
 }
