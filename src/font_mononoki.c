@@ -1,13 +1,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// https://madmalik.github.io/mononoki/           <-- love this font
 // https://lucide.github.io/Font-Atlas-Generator/ <-- i might not kill myself thanks to this :)
 
-#define FONT3_FRAME_COUNT 62
-#define FONT3_FRAME_WIDTH 40
-#define FONT3_FRAME_HEIGHT 40
-
-/* Piskel data for "font3" */
+#define MONONOKI_FRAME_COUNT 62
+#define MONONOKI_FRAME_WIDTH 40
+#define MONONOKI_FRAME_HEIGHT 40
 
 static const bool font_data[62][1600] = {
 {

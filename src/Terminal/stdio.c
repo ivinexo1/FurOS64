@@ -1,5 +1,5 @@
 #include "Terminal/stdio.h"
-#include "../font3.c"
+#include "../font_mononoki.c"
 #include "Drivers/vga.h"
 #include "stdlib/string.h"
 #include <stdint.h>

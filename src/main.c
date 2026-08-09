@@ -1,4 +1,4 @@
-#include "./font3.c"
+#include "./font_mononoki.c"
 #include "Drivers/vga.h"
 #include "MemoryManagment/MemoryManager.h"
 #include "Terminal/stdio.h"

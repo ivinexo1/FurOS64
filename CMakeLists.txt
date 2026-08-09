@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(kernel
               ${PROJECT_SOURCE_DIR}/src/main.c
-              ${PROJECT_SOURCE_DIR}/src/font3.c
+              ${PROJECT_SOURCE_DIR}/src/font_mononoki.c
               ${PROJECT_SOURCE_DIR}/src/stdlib/string.c
               ${PROJECT_SOURCE_DIR}/src/MemoryManagment/physical.c
               ${PROJECT_SOURCE_DIR}/src/Drivers/vga.c
