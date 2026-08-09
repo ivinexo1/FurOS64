@@ -17,7 +17,7 @@ int SetIdtHandler(uint64_t address, uint32_t entry) {
 
 int LoadIdt() {
   interrupt_table_reg.address = (uint64_t)&interrupt_gate;
-  interrupt_table_reg.size = (IDT_ENTRIES - 1) * sizeof(idt_t);
-  asm volatile("lidt %0" : : "r"(&interrupt_table_reg) : "memory");
+  interrupt_table_reg.size = IDT_ENTRIES * sizeof(idt_t) - 1;
+  asm volatile("lidt %0" : : "m"(&interrupt_table_reg) : "memory");
   return 0;
 }
