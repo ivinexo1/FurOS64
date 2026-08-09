@@ -6,7 +6,7 @@
 </div>
 
 > [!NOTE]
-> Deprecated 32bit version of this project can be found [here](https://github.com/ivinexo1/FurOS)
+> [The deprecated (32bit) version of this project can be found here](https://github.com/ivinexo1/FurOS)
 
 ## Setup and such
 
