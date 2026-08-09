@@ -5,7 +5,10 @@
   <img src="https://img.shields.io/github/stars/ivinexo1/FurOS64"></img>
 </div>
 
-32bit version can be found [here](https://github.com/ivinexo1/FurOS), idk what to write here yet we need to port over the stuff first ig
+> [!INFO]
+> Deprecated 32bit version of this project can be found [here](https://github.com/ivinexo1/FurOS)
+
+## Setup and such
 
 stuff to install [requires linux / WSL]
 ```
