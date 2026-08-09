@@ -45,7 +45,7 @@ set_target_properties(BOOTX64.so PROPERTIES
 )
 
 add_custom_command(TARGET BOOTX64.so POST_BUILD
-                  COMMAND objcopy -j .text -j .sdata -j .data -j .rodata -j .dynamic -j .dynsym -j .rel -j .rela -j .rel.* -j .rela.* -j .reloc --target pei-x86-64 --subsystem=10 ${CMAKE_BINARY_DIR}/efi/BOOTX64.so ${CMAKE_BINARY_DIR}/efi/BOOTX64.efi
+                  COMMAND objcopy -j .text -j .sdata -j .data -j .rodata -j .dynamic -j .dynsym -j .rel -j .rela -j .rel.* -j .rela.* -j .reloc -O pei-x86-64 --subsystem=10 ${CMAKE_BINARY_DIR}/efi/BOOTX64.so ${CMAKE_BINARY_DIR}/efi/BOOTX64.efi
 )
 
 add_executable(EFI_STUB.so
@@ -88,5 +88,5 @@ set_target_properties(EFI_STUB.so PROPERTIES
 )
 
 add_custom_command(TARGET EFI_STUB.so POST_BUILD
-                  COMMAND objcopy -j .text -j .sdata -j .data -j .rodata -j .dynamic -j .dynsym -j .rel -j .rela -j .rel.* -j .rela.* -j .reloc --target efi-app-x86_64 --subsystem=10 ${CMAKE_BINARY_DIR}/efi/EFI_STUB.so ${CMAKE_BINARY_DIR}/efi/EFI_STUB.efi
+                  COMMAND objcopy -j .text -j .sdata -j .data -j .rodata -j .dynamic -j .dynsym -j .rel -j .rela -j .rel.* -j .rela.* -j .reloc -O efi-app-x86_64 --subsystem=10 ${CMAKE_BINARY_DIR}/efi/EFI_STUB.so ${CMAKE_BINARY_DIR}/efi/EFI_STUB.efi
 )
