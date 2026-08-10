@@ -11,22 +11,28 @@
 > [!NOTE]
 > This is still (very) early in development, we didn't even port everything over yet.
 
-## Setup and such
+## Setup (installation)
 
-stuff to install [requires linux / WSL]
 ```
 sudo pacman -Sy gcc
 sudo pacman -Sy cmake
 sudo pacman -Sy make
 sudo pacman -Sy mtools
+sudo pacman -Sy qemu
 ```
-also qemu but that can be done in windows
+
+## How to use
 
 ```
 rm build -rf
 cmake -B build
 ```
+```
+qemu-system-x86_64 -cpu qemu64 -bios OVMF.fd -drive file=fat.img,if=ide,format=raw
+```
 
-`$'\r'` getting error similar to this can be fixed by doing notepad++ > edit > EOL conversion > LF
+# Potential issues
 
-remove `-d int,mmu` z qemu cmd lebo windows ma skill issue
+`$'\r'` getting error similar to this can be fixed by changing EOL conversion to LF
+
+~remove `-d int,mmu` z qemu cmd lebo windows ma skill issue~
