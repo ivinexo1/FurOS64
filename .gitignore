@@ -25,3 +25,4 @@ build/
 /efi/.cache/clangd/index
 /efi/.cache/clangd/index
 .vscode/
+/run/fat.img
