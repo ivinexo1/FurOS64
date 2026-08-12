@@ -8,7 +8,7 @@ void isr_install() {
 }
 
 void isr_handler(registers_t *r) {
-    printString(exception_msg[r->int_no]);
+    PrintString(exception_msg[r->int_no]);
     asm volatile("hlt");
 }
 
