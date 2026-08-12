@@ -15,6 +15,24 @@ add_executable(kernel
               ${PROJECT_SOURCE_DIR}/src/Arch/Interrupts/isr.c
               ${PROJECT_SOURCE_DIR}/src/decoder_qoi.c)
 
+file(GLOB ASSET_FILES ${PROJECT_SOURCE_DIR}/assets/*.qoi)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/assets)
+foreach(ASSET ${ASSET_FILES})
+    get_filename_component(ASSET_NAME ${ASSET} NAME_WE)
+    set(ASSET_OBJ ${CMAKE_BINARY_DIR}/assets/${ASSET_NAME}.o)
+
+    add_custom_command(
+        OUTPUT ${ASSET_OBJ}
+        COMMAND objcopy -I binary -O elf64-x86-64 -B i386:x86-64
+                ${ASSET_NAME}.qoi ${ASSET_OBJ}
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/assets
+        DEPENDS ${ASSET}
+    )
+    list(APPEND ASSET_OBJS ${ASSET_OBJ})
+endforeach()
+
+target_sources(kernel PRIVATE ${ASSET_OBJS})
+
 target_compile_options(kernel PRIVATE
                         -ffreestanding
                         -fno-stack-protector

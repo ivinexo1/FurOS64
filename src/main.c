@@ -6,6 +6,7 @@
 #include <cpuid.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <decoder_qoi.h>
 
 typedef struct {
   uint64_t MemoryMapSize;
@@ -46,6 +47,13 @@ void kernel() {
                       KernelArgs->TempMappingRegion);
 
   PrintString("Hello\n");
+  if (decode_qoi() == 1)
+  {
+    PrintString("qoif\n");
+  } else
+  {
+    PrintString("incorrect");
+  }
   while (1)
     ;
 }
