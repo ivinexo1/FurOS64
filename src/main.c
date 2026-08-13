@@ -47,13 +47,7 @@ void kernel() {
                       KernelArgs->TempMappingRegion);
 
   PrintString("Hello\n");
-  if (decode_qoi() == 1)
-  {
-    PrintString("qoif\n");
-  } else
-  {
-    PrintString("incorrect");
-  }
+  decode_qoi();
   while (1)
     ;
 }

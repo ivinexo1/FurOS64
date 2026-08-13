@@ -1,4 +1,5 @@
 #include "decoder_qoi.h"
+#include "Terminal/stdio.h"
 #include <stdint.h>
 
 int decode_qoi()
@@ -8,14 +9,22 @@ int decode_qoi()
 
     if (data[0] == 'q' && data[1] == 'o' && data[2] == 'i' && data[3] == 'f')
     {
-        return 1;
+        PrintString("qoif");
     } else {
+        PrintString("incorrect format\n");
         return 0;
     }
 
     qoi_desc desc;
-    desc.width = 0;
-    desc.height = 0;
-    desc.channels = 0;
-    desc.channels = 0;
+    desc.width = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7];
+    desc.height = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | data[11];
+    desc.channels = data[12];
+    desc.colorspace = data[13];
+
+    PrintString("\nw ");
+    PrintNum(desc.width);
+    PrintString("\nh ");
+    PrintNum(desc.height);
+
+    return 1;
 }
