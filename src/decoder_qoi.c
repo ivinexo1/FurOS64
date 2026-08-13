@@ -7,13 +7,19 @@ int decode_qoi()
     const uint8_t *data = _binary_image_qoi_start;
     uint64_t len = (uint64_t)(_binary_image_qoi_end - _binary_image_qoi_start);
 
-    if (data[0] == 'q' && data[1] == 'o' && data[2] == 'i' && data[3] == 'f')
+    if (len < 14)
     {
-        PrintString("qoif");
-    } else {
+        PritnString("qoi file too short\n");
+        return 0;
+    }
+
+    if (data[0] != 'q' && data[1] != 'o' && data[2] != 'i' && data[3] != 'f')
+    {
         PrintString("incorrect format\n");
         return 0;
     }
+
+    PrintString("qoif");
 
     qoi_desc desc;
     desc.width = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7];
