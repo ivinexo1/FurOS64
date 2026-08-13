@@ -11,7 +11,7 @@ int decode_qoi(const uint8_t *data, uint64_t len, qoi_desc desc)
         return 0;
     }
 
-    if (data[0] != 'q' && data[1] != 'o' && data[2] != 'i' && data[3] != 'f')
+    if (data[0] != 'q' || data[1] != 'o' || data[2] != 'i' || data[3] != 'f')
     {
         PrintString("incorrect format\n");
         return 0;
@@ -22,7 +22,7 @@ int decode_qoi(const uint8_t *data, uint64_t len, qoi_desc desc)
     desc.channels = data[12];
     desc.colorspace = data[13];
 
-    qoi_rgba index[64];
+    qoi_rgba index[64] = {0};
     qoi_rgba px = { 0, 0, 0, 255 };
 
     // header is 14 bytes
@@ -33,9 +33,12 @@ int decode_qoi(const uint8_t *data, uint64_t len, qoi_desc desc)
 
     for (uint32_t y = 0; y < desc.height; y++)
     {
-        for (uint32_t x; x < desc.width; x++)
+        for (uint32_t x = 0; x < desc.width; x++)
         {
             if (run > 0)
+            {
+                run--;
+            } else if (p < end)
             {
                 uint8_t b1 = data[p++];          // first byte
 
@@ -50,22 +53,22 @@ int decode_qoi(const uint8_t *data, uint64_t len, qoi_desc desc)
                     px.g = data[p++];
                     px.b = data[p++];
                     px.a = data[p++];
-                } else if ((b1 && 0xC0) == 0x00) // t2 bits 00
+                } else if ((b1 & 0xC0) == 0x00) // t2 bits 00
                 {
                     px = index[b1];
-                } else if ((b1 && 0xC0) == 0x40) // t2 bits 01
+                } else if ((b1 & 0xC0) == 0x40) // t2 bits 01
                 {
                     px.r += ((b1 >> 4) & 0x03) - 2;
                     px.g += ((b1 >> 2) & 0x03) - 2;
                     px.b += ( b1       & 0x03) - 2;
-                } else if ((b1 && 0xC0) == 0x80) // t2 bits 10
+                } else if ((b1 & 0xC0) == 0x80) // t2 bits 10
                 {
                     uint8_t b2 = data[p++];
                     int vg = (b1 & 0x3F) - 32;
                     px.r += vg - 8 + ((b2 >> 4) & 0x0F);
                     px.g += vg;
                     px.b += vg - 8 + (b2 & 0x0F);
-                } else if ((b1 && 0xC0) == 0xC0) // t2 bits 11
+                } else if ((b1 & 0xC0) == 0xC0) // t2 bits 11
                 {
                     run = b1 & 0x3F;
                 }
