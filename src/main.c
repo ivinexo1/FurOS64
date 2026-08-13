@@ -46,8 +46,10 @@ void kernel() {
                       KernelArgs->FrameMap, KernelArgs->FrameMapSize,
                       KernelArgs->TempMappingRegion);
 
-  PrintString("Hello\n");
-  decode_qoi();
+  const uint8_t *data = _binary_image_qoi_start;
+  uint64_t len = (uint64_t)(_binary_image_qoi_end - _binary_image_qoi_start);
+  qoi_desc desc;
+  decode_qoi(data, len, desc);
   while (1)
     ;
 }
