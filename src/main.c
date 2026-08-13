@@ -50,6 +50,7 @@ void kernel() {
   uint64_t len = (uint64_t)(_binary_image_qoi_end - _binary_image_qoi_start);
   qoi_header_t header;
   decode_qoi(data, len, header);
+  PrintString("Hello");
   while (1)
     ;
 }

@@ -41,7 +41,7 @@ int PrintChar(char character) {
         if (font_data[printed][j * FONT_WIDTH + i]) {
           PrintPixel(i + x * FONT_WIDTH, j + y * FONT_HEIGHT, fgcolor);
         } else {
-          PrintPixel(i + x * FONT_WIDTH, j + y * FONT_HEIGHT, bgcolor);
+          // PrintPixel(i + x * FONT_WIDTH, j + y * FONT_HEIGHT, bgcolor);
         }
       }
     }
