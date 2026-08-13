@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <Drivers/vga.h>
 
-int decode_qoi(const uint8_t *data, uint64_t len, qoi_desc desc)
+int decode_qoi(const uint8_t *data, uint64_t len, qoi_header_t header)
 {
     if (len < 14)
     {
@@ -17,13 +17,13 @@ int decode_qoi(const uint8_t *data, uint64_t len, qoi_desc desc)
         return 0;
     }
 
-    desc.width = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7];
-    desc.height = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | data[11];
-    desc.channels = data[12];
-    desc.colorspace = data[13];
+    header.width = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7];
+    header.height = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | data[11];
+    header.channels = data[12];
+    header.colorspace = data[13];
 
-    qoi_rgba index[64] = {0};
-    qoi_rgba px = { 0, 0, 0, 255 };
+    qoi_rgba_t index[64] = {0};
+    qoi_rgba_t px = { 0, 0, 0, 255 };
 
     // header is 14 bytes
     // theres also 8 byte end marker
@@ -31,9 +31,9 @@ int decode_qoi(const uint8_t *data, uint64_t len, qoi_desc desc)
     uint64_t end = len - 8;
     uint32_t run = 0;
 
-    for (uint32_t y = 0; y < desc.height; y++)
+    for (uint32_t y = 0; y < header.height; y++)
     {
-        for (uint32_t x = 0; x < desc.width; x++)
+        for (uint32_t x = 0; x < header.width; x++)
         {
             if (run > 0)
             {
