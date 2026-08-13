@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <Drivers/vga.h>
 
-int decode_qoi(const uint8_t *data, uint64_t len, qoi_header_t header)
+int decode_qoi(const uint8_t *data, uint64_t len)
 {
     if (len < 14)
     {
@@ -16,6 +16,8 @@ int decode_qoi(const uint8_t *data, uint64_t len, qoi_header_t header)
         PrintString("incorrect format\n");
         return 0;
     }
+
+    qoi_header_t header;
 
     header.width = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7];
     header.height = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | data[11];
