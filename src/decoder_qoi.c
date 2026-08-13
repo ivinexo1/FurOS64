@@ -21,10 +21,14 @@ int decode_qoi()
     desc.channels = data[12];
     desc.colorspace = data[13];
 
-    PrintString("\nw ");
+    PrintString("\nwidth ");
     PrintNum(desc.width);
-    PrintString("\nh ");
+    PrintString("\nheight ");
     PrintNum(desc.height);
+    PrintString("\nchannels ");
+    PrintNum(desc.channels);
+    PrintString("\ncolorspace ");
+    PrintNum(desc.colorspace);
 
     return 1;
 }
