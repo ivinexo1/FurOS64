@@ -12,7 +12,9 @@ add_executable(kernel
               ${PROJECT_SOURCE_DIR}/src/Drivers/vga.c
               ${PROJECT_SOURCE_DIR}/src/Terminal/stdio.c
               ${PROJECT_SOURCE_DIR}/src/Arch/Interrupts/idt.c
-              ${PROJECT_SOURCE_DIR}/src/Arch/Interrupts/isr.c)
+              ${PROJECT_SOURCE_DIR}/src/Arch/Interrupts/isr.c
+              ${PROJECT_SOURCE_DIR}/src/Arch/in_out.c
+)
 
 target_compile_options(kernel PRIVATE
                         -ffreestanding

@@ -19,7 +19,7 @@ int memcpy(void *restrict dest, const void *restrict src, size_t n) {
   return 0;
 }
 
-int AllocFrame(uint8_t *frame_pointer) {
+int AllocFrame(void *frame_pointer) {
   frame_pointer = (uint8_t *)((uint64_t)frame_pointer / 0x1000);
   uint64_t offset = (uint64_t)frame_pointer / 8;
   uint64_t bit_in_byte = (uint64_t)frame_pointer % 8;
@@ -30,7 +30,7 @@ int AllocFrame(uint8_t *frame_pointer) {
   return 0;
 }
 
-int FreeFrame(uint8_t *frame_pointer) {
+int FreeFrame(void *frame_pointer) {
   uint64_t offset = (uint64_t)frame_pointer / 8;
   uint64_t bit_in_byte = (uint64_t)frame_pointer % 8;
   if (((frame_map[offset] >> bit_in_byte) & 1) != 1) {
