@@ -8,3 +8,4 @@ int PrintChar(char character);
 int PrintNum(uint32_t number);
 int PrintHex(uint64_t number);
 int PrintString(char *string);
+int RenderImage();

@@ -107,3 +107,13 @@ int PrintString(char *string) {
   }
   return 0;
 }
+
+int RenderImage()
+{
+  /*
+  get "type" from the passed arg and then decide
+  which decoder to use based on that.
+  (teraz mame iba QOI ale wtv)
+  */
+  return 0;
+}
