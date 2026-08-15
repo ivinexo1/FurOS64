@@ -48,7 +48,7 @@ void kernel() {
 
   const uint8_t *data = _binary_image_qoi_start;
   uint64_t len = (uint64_t)(_binary_image_qoi_end - _binary_image_qoi_start);
-  decode_qoi(data, len);
+  decode_qoi(data, len, 0, 0);
   PrintString("Hello");
   while (1)
     ;

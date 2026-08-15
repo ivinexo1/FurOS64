@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <Drivers/vga.h>
 
-int decode_qoi(const uint8_t *data, uint64_t len)
+int decode_qoi(const uint8_t *data, uint64_t len, int offsetx, int offsety)
 {
     if (len < 14)
     {
@@ -79,7 +79,7 @@ int decode_qoi(const uint8_t *data, uint64_t len)
             }
 
             uint32_t color = ((uint32_t)px.r << 16) | ((uint32_t)px.g << 8) | (uint32_t)px.b;
-            PrintPixel(x, y, color);
+            PrintPixel(x + offsetx, y + offsety, color);
         }
     }
 

@@ -14,4 +14,4 @@ typedef struct {
 extern const uint8_t _binary_image_qoi_start[];
 extern const uint8_t _binary_image_qoi_end[];
 
-int decode_qoi(const uint8_t *data, uint64_t len);
+int decode_qoi(const uint8_t *data, uint64_t len, int offsetx, int offsety);
