@@ -4,7 +4,7 @@
 static idt_register_t interrupt_table_reg;
 static idt_gate_t interrupt_gate[IDT_ENTRIES];
 
-int SetIDTGate(uint32_t entry, uint64_t address)
+void SetIDTGate(uint32_t entry, uint64_t address)
 {
   interrupt_gate[entry].offset_1 = (uint16_t)address;
   interrupt_gate[entry].selector = 0x10;
@@ -13,13 +13,11 @@ int SetIDTGate(uint32_t entry, uint64_t address)
   interrupt_gate[entry].offset_2 = (uint16_t)(address >> 16);
   interrupt_gate[entry].offset_3 = (uint32_t)(address >> 32);
   interrupt_gate[entry].zero = 0;
-  return 0;
 }
 
-int LoadIdt(void)
+void LoadIdt(void)
 {
   interrupt_table_reg.address = (uint64_t)&interrupt_gate;
   interrupt_table_reg.size = IDT_ENTRIES * sizeof(idt_gate_t) - 1;
   // asm volatile("lidt %0" : : "m"(&interrupt_table_reg) : "memory");
-  return 0;
 }
