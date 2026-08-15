@@ -5,7 +5,7 @@
 typedef struct {
   uint16_t size;
   uint64_t address;
-} __attribute__((packed)) idtr_t;
+} __attribute__((packed)) idt_register_t;
 
 typedef struct {
   uint16_t offset_1;
@@ -15,4 +15,7 @@ typedef struct {
   uint16_t offset_2;
   uint32_t offset_3;
   uint32_t zero;
-} __attribute__((packed)) idt_t;
+} __attribute__((packed)) idt_gate_t;
+
+void SetIDTGate(uint32_t entry, uint64_t address);
+void LoadIdt(void);

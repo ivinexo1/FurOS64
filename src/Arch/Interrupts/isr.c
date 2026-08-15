@@ -6,6 +6,10 @@ isr_t interrupt_handlers[ISR_ENTRIES];
 
 void isr_install()
 {
+    SetIDTGate(0, (uint64_t)isr0);
+    SetIDTGate(1, (uint64_t)isr1);
+    SetIDTGate(2, (uint64_t)isr2);
+    SetIDTGate(4, (uint64_t)isr3);
 }
 
 void isr_handler(registers_t *r)
@@ -16,7 +20,8 @@ void irq_handler(registers_t *r)
 {
 }
 
-void register_interrupt_handler(uint8_t n, isr_t handler) {
+__attribute__ ((interrupt)) void register_interrupt_handler(uint8_t n, isr_t handler)
+{
     interrupt_handlers[n] = handler;
 }
 
