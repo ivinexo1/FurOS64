@@ -6,6 +6,7 @@ isr_t interrupt_handlers[ISR_ENTRIES];
 
 void isr_install()
 {
+    LoadIdt();
 }
 
 void isr_handler(registers_t *r)

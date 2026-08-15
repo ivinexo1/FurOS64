@@ -19,5 +19,5 @@ void LoadIdt(void)
 {
   interrupt_table_reg.address = (uint64_t)&interrupt_gate;
   interrupt_table_reg.size = IDT_ENTRIES * sizeof(idt_gate_t) - 1;
-  // asm volatile("lidt %0" : : "m"(&interrupt_table_reg) : "memory");
+  asm volatile("lidt %0" : : "m"(interrupt_table_reg) : "memory");
 }
