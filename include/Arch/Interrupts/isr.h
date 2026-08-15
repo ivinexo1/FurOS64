@@ -77,7 +77,7 @@ extern void isr61();
 extern void isr62();
 extern void isr63();
 
-void isr_install(void);
-void isr_handler(registers_t *r);
-void irq_handler(registers_t *r);
-void register_interrupt_handler(uint8_t n, isr_t handler);
+void ISRInstall(void);
+void ISRHandler(registers_t *r);
+void IRQHandler(registers_t *r);
+void RegisterInterruptHandler(uint8_t n, isr_t handler);

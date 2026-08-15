@@ -15,7 +15,7 @@ void SetIDTGate(uint32_t entry, uint64_t address)
   interrupt_gate[entry].zero = 0;
 }
 
-void LoadIdt(void)
+void LoadIDT(void)
 {
   interrupt_table_reg.address = (uint64_t)&interrupt_gate;
   interrupt_table_reg.size = IDT_ENTRIES * sizeof(idt_gate_t) - 1;
