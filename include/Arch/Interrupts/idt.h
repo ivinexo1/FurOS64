@@ -17,5 +17,5 @@ typedef struct {
   uint32_t zero;
 } __attribute__((packed)) idt_gate_t;
 
-void SetIDTGate(uint32_t entry, uint64_t address);
-void LoadIdt(void);
+int SetIDTGate(uint32_t entry, uint64_t address);
+int LoadIdt(void);
